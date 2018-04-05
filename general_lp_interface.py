@@ -12,12 +12,16 @@ def solve(y, A, nvar, noiseless):
     a_i_n = []
     a_j_n = []
 
+    #ones of lenght number of test true, can be written in different ways
     Y_i = [item for item in y if item == 1]
 
+
+    #generate diagonal matrix to insert correctly noise in constraint
     ones = [1.0 for i in range(len(y))]
-    N = np.diag(ones)
+    N = np.diag(ones) #with positve
     minus_N = np.diag(np.multiply(-1, ones))
 
+    #enumerate constraint by the test results
     for i in range(len(y)):
         if y[i] == 1.0:
             a_i_n.append(A[i] + list(N[i]))
@@ -65,6 +69,7 @@ def solve(y, A, nvar, noiseless):
                                    rhs=m_rhs,
                                    names=m_names)
 
+    #kill verbosity
     problem.set_log_stream(None)
     problem.set_error_stream(None)
     problem.set_warning_stream(None)
