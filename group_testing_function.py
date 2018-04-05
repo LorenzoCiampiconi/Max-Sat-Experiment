@@ -1,7 +1,7 @@
 import numpy as np
 import numpy.random as nrndm
 
-noise_probability = 0.01
+
 
 def generate_input(n, p):
     # input vector
@@ -24,19 +24,20 @@ def generate_pool_matrix(n, k, t):
     #print("matrix generated, getting result")
     return a
 
-def get_results(t, a, x, noiseless):
+def get_results(t, a, x, noiseless, noise_probability):
     #vector of the tests
     y = [0] * t
     # get result of test
     if noiseless:
         for i in range(t):
-            if 1 in a[i] * x:
+            if 1 in (a[i] * x):
                 y[i] = 1
     else:
         for i in range(t):
-            if 1 in a[i] * x:
+            if 1 in (a[i] * x):
                 y[i] = 1
-            y[i] = abs(y[i] - nrndm.choice(range(0, 2), p=[1 - noise_probability, noise_probability]))
+            y[i] = abs(y[i] - nrndm.choice(range(0, 2), p = [1 - noise_probability, noise_probability]))
+
     return y
 
 

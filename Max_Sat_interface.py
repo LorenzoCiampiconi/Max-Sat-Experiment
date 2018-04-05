@@ -5,7 +5,6 @@ MAX_HS_DIR = r"../MaxHS-3.0"
 COMMAND = "maxhs"
 fixed_header = "c\nc comments Weighted Max-SAT\nc\np wcnf "
 hard_weight = 10000
-noise_weight = 10
 soft_weight = 1
 input_for_max_HS = "/max_sat_input"
 output_data_set = "data set"
@@ -33,7 +32,7 @@ def call_Max_Sat(n):
     return model, noise
 
 # function to generate file to be read by Max_HS and file of data_set
-def output(n, t, x, y, a, noiseless):
+def output(n, t, x, y, a, noiseless, noise_weight):
     if noiseless:
         m = n
     else:
