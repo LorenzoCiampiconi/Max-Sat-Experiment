@@ -17,15 +17,17 @@ class trial:
         self.t_h = [] #temporary hamming distance
         self.var = var
 
-def main():
-    x, k = gtf.generate_input(n, 5/n)
+def main_1():
+    x, k = gtf.generate_input(n, 0.01)
+
+    # avoid k = 0, trivial example
+    while k == 0:
+        x, k = gtf.generate_input(n, 0.01)
+
+    x_s = [1 if i in x else 0 for i in range(1, n + 1)]
 
 
-    #avoid k = 0, trivial example
-    while k != 4:
-        x, k = gtf.generate_input(n, 5 / n)
-
-    noise_probability = 0.0
+    noise_probability = 0.05
 
     T = [1, int(n / (5* np.log2(n)) +1)]
 
@@ -63,7 +65,7 @@ def main():
             tr.t_e = [] #blank temporary
             tr.t_h = [] #blank temporary
 
-        for i in range(5):
+        for i in range(100):
             a = gtf.generate_pool_matrix(n, k, t)
 
             for tr in nw_trials:
@@ -73,7 +75,7 @@ def main():
 
                 #calculating hamming distance between model result and input x
 
-                hamming_distance = (n)*sd.hamming(x,r)
+                hamming_distance = (n)*sd.hamming(x_s,r)
                 tr.t_h.append(hamming_distance)
 
                 #there's an error?
@@ -95,21 +97,22 @@ def main():
         plt.plot(T, tr.P, "bo")
         plt.plot(X, tr.P, "r")
         plt.plot(T, tr.P, "g")
-        plt.title("Error trend of Max_Sat applied to Group Testing with  n = " + str(n) + " k = " + str(k))
+        plt.title("Error trend of LP_Relax applied to Group Testing with  n = " + str(n) + " k = " + str(k))
         plt.xlabel("Number of tests t")
         plt.ylabel("Probability of success")
-        plt.savefig("PS, n = " + str(n) + " k = " + str(k) + "noisy_weight = " + str(tr.var) + ".png")
+        plt.savefig("LP, PS, n = " + str(n) + " k = " + str(k) + "noisy_weight = " + str(tr.var) + ".png")
         plt.show()
 
-        plt.plot(T, tr.E, "bo")
-        plt.plot(X, tr.E, "r")
+        plt.plot(T, tr.E, "bo", label="medium time")
+        plt.plot(X, tr.E, "r", label = "k * log2(n / k)")
         plt.plot(T, tr.E, "g")
-        plt.title("Error trend of Max_Sat applied to Group Testing with  n = " + str(n) + " k = " + str(k))
+        plt.title("Error trend of LP_Relax applied to Group Testing with  n = " + str(n) + " k = " + str(k))
         plt.xlabel("Number of tests t")
         plt.ylabel("Error (Hamming Distance)")
-        plt.savefig("HD, n = " + str(n) + " k = " + str(k) + "noisy_weight = " + str(tr.var) + ".png")
+        plt.savefig("LP, HD, n = " + str(n) + " k = " + str(k) + "noisy_weight = " + str(tr.var) + ".png")
+        plt.legend(loc="lower right")
         plt.show()
 
 
 
-main()
+main_1()

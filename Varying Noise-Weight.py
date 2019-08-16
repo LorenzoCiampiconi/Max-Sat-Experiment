@@ -1,4 +1,5 @@
 import Max_Sat_interface as mxs
+import general_lp_interface as lp
 import group_testing_function as gtf
 import numpy as np
 import scipy.spatial.distance as sd
@@ -32,7 +33,7 @@ def main():
 
     trials = []
 
-    noise_weights = [0.7, 0.74, 0.76, 0.8, 0.82, 0.84, 0.88, 0.9, 0.95, 1 ,1.02, 1.04, 1.1, 1.15, 1.2]
+    noise_weights = [0.3, 0.4, 0.5, 0.6, 0.7, 0.75, 0.8, 0.9, 1, 1.05, 1.1]
 
     for i in T:
         trials.append(trial(i))
@@ -45,7 +46,7 @@ def main():
             tr.t_e = [] #blank temporary
             tr.t_h = [] #blank temporary
 
-        for i in range(300):
+        for i in range(100):
             print(i)
 
             for tr in trials:
@@ -70,24 +71,54 @@ def main():
             tr.E.append(np.mean(tr.t_h))
             tr.P.append(1 - np.mean(tr.t_e))
 
+    lp_t_h = []
+    lp_t_e=[]
+
+    #********* LP - RELAXATION *********
+    for i in range(100):
+        print(i)
+        a = gtf.generate_pool_matrix(n, k, tr.var)
+
+        y = gtf.get_results(tr.var, a, x, noiseless, noise_probability)
+
+        r = lp.solve(y, a, n, noiseless)[:n]
+
+        hamming_distance = (n) * sd.hamming(x, r)
+        lp_t_h.append(hamming_distance)
+
+        # there's an error?
+        if hamming_distance > 0:
+            lp_t_e.append(1)
+        else:
+            lp_t_e.append(0)
+
+    E = np.mean(lp_t_h)
+    P = 1 - np.mean(lp_t_e)
+
+    LP_E = [E for i in noise_weights]
+    LP_P = [P for i in noise_weights]
+
     X = []
 
     for tr in trials:
 
-        plt.plot(noise_weights, tr.P, "bo")
+        fig = plt.figure()
+        plt.plot(noise_weights, tr.P, "bo", label = "max-sat")
         plt.plot(noise_weights, tr.P, "g")
+        plt.plot(noise_weights, LP_P, "y", label = "LP")
         plt.title("Error trend of Max_Sat applied to Group Testing with  n = " + str(n) + " k = " + str(k))
         plt.xlabel("weight to the noise")
         plt.ylabel("Probability of success")
-        plt.savefig("PS, n = " + str(n) + " k = " + str(k) + "nT = " + str(tr.var) + ".png")#todo complete
+        plt.savefig("PS, n = " + str(n) + " k = " + str(k) + "nT = " + str(tr.var) + ".png")
         plt.show()
 
-        plt.plot(noise_weights, tr.E, "bo")
+        plt.plot(noise_weights, tr.E, "bo", label = "max-sat")
         plt.plot(noise_weights, tr.E, "g")
+        plt.plot(noise_weights, LP_E, "y", label="LP")
         plt.title("Error trend of Max_Sat applied to Group Testing with  n = " + str(n) + " k = " + str(k))
         plt.xlabel("Number of tests t")
         plt.ylabel("Error (Hamming Distance)")
-        plt.savefig("HD, n = " + str(n) + " k = " + str(k) + "nT = " + str(tr.var) + ".png")  # todo complete
+        plt.savefig("HD, n = " + str(n) + " k = " + str(k) + "nT = " + str(tr.var) + ".png")
         plt.show()
 
 
