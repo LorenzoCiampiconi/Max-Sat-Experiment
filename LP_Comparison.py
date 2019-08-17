@@ -227,4 +227,11 @@ def main(n, p, noiseless):
         plt.show()
 
 
-main(8000, 0.03, True)
+main(250, 0.03, True)
+main(500, 0.03, True)
+main(750, 0.03, True)
+main(1000, 0.03, True)
+main(250, 0.03, False)
+main(500, 0.03, False)
+main(750, 0.03, False)
+main(1000, 0.03, False)

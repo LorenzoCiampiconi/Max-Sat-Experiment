@@ -13,7 +13,7 @@ P = 0.01
 Lambda = 0.9
 
 
-noiseless = True
+
 
 class Trial:
     def __init__(self, var):
@@ -24,7 +24,7 @@ class Trial:
         self.var = var
 
 
-def main(n, p, u):
+def main(n, p, noiseless, u):
 
     n_trials = N_trials
 
@@ -161,8 +161,12 @@ def main(n, p, u):
         output_file.write(output_string)
 
 
-main(100, 0.01, 1)
-main(100, 0.02, 2)
-main(100, 0.03, 3)
-main(100, 0.04, 4)
-main(100, 0.05, 5)
+main(750, 0.1, True, 1)
+main(750, 0.3, True, 2)
+main(750, 0.5, True, 3)
+main(750, 0.7, True, 4)
+
+main(8000, 0.01, True, 5)
+main(8000, 0.02, True, 6)
+main(8000, 0.03, True, 7)
+main(8000, 0.04, True, 8)
