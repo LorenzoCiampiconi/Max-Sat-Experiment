@@ -9,8 +9,8 @@ import Print
 import pandas as pd
 import seaborn as sns
 
-DIR = "../pull-nscc/out-6845204.wlm01/"
-N = 10
+DIR = "../pull-nscc/Print-750/"
+N = 215
 FILE_GENERAL = "output_file-"
 EXTENSION = ".out"
 
@@ -65,30 +65,29 @@ def parser():
 
             values = P
             data = pd.DataFrame(values, T, columns=["MAX-sat"])
-            data = data.resample(10)
+
 
             sns.lineplot(data=data, palette="tab10", linewidth=2.5)
-            plt.plot(T, P, "bo", label="Max_sat")
-            plt.plot(X, P, "r", label="k * log2(n / k)")
+            plt.plot(T, P, "bo")
+            plt.plot(X, P, "r", label="Recovery Bound")
             plt.plot(T, P, "g")
-            plt.title("Error trend of Max_Sat applied to Group Testing with  n = " + str(n) + " k = " + str(k))
-            plt.xlabel("Number of tests t")
+            plt.title("Probability of Success with e = " + str(n) + " k = " + str(k))
+            plt.xlabel("Number of tests m")
             plt.ylabel("Probability of success")
             plt.legend(loc="lower right")
-            plt.savefig("PS, n = " + str(n) + " k = " + str(k) + "l = " + str(lambdam) +  ".png")
+            plt.savefig("PS, e = " + str(n) + " k = " + str(k) + "l = " + str(lambdam) +  ".png")
             plt.show()
             plt.close()
 
             values = E
             data = pd.DataFrame(values, T, columns=["MAX-sat"])
-            data = data.rolling(7).mean()
 
             sns.lineplot(data=data, palette="tab10", linewidth=2.5)
-            plt.plot(T, E, "bo", label="Max_sat")
-            plt.plot(X, E, "r", label="k * log2(n / k)")
+            plt.plot(T, E, "bo")
+            plt.plot(X, E, "r", label="Recovery Bound")
             plt.plot(T, E, "g")
-            plt.title("Error trend of Max_Sat applied to Group Testing with  n = " + str(n) + " k = " + str(k))
-            plt.xlabel("Number of tests t")
+            plt.title("Hamming Distance trend with  e = " + str(n) + " k = " + str(k))
+            plt.xlabel("Number of tests m")
             plt.ylabel("Error (Hamming Distance)")
             plt.legend(loc="upper right")
             plt.savefig("HD, n = " + str(n) + " k = " + str(k) + "l = " + str(lambdam) + ".png")

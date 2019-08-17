@@ -8,10 +8,6 @@ import math
 import seaborn as sns
 import pandas as pd
 
-
-n = 250
-
-noiseless = False
 weighted = False
 
 
@@ -36,12 +32,16 @@ class trial:
         self.var = var
 
 
-def main():
-    x, k = gtf.generate_input(n, 5/n)
+def main(n, p, noiseless):
+    k = round(n * p)
+
+    x, k_g = gtf.generate_input(n, p)
 
     # avoid k = 0, trivial example
-    while k != 4:
-        x, k = gtf.generate_input(n, 5 / n)
+    # avoid k = 0, trivial example
+    while (abs(k_g - k) / n) >= 0.01 or k_g == 0:
+        print("choosing")
+        x, k_g = gtf.generate_input(n, p)
 
     x_s = [1 if i in x else 0 for i in range(1, n + 1)]
 
@@ -53,15 +53,15 @@ def main():
     i = 1
     # until we reach the condition of success have more dense trials
     while T[i] < k * np.log2(n / k):
-        if T[i] - T[i - 1] > 1:
-            T.append(int(2 * T[i] - T[i - 1] - 1))
+        if T[i] - T[i - 1] > round(n/100):
+            T.append(int(2 * T[i] - T[i - 1] - round(n/100)))
         else:
-            T.append(int(T[i] + 1))
+            T.append(int(T[i] + round(n/100)))
         i += 1
 
     # dense trials around k* log2(n/k)
     while T[i] < n:
-        T.append(int(2 * T[i] - T[i - 1] + 1))
+        T.append(int(2 * T[i] - T[i - 1] + round(n/100)))
 
         i += 1
 
@@ -97,7 +97,7 @@ def main():
             tr.lp_t_e_c = []  # blank temporary
             tr.lp_t_h_c = []  # blank temporary
 
-        for i in range(75):
+        for i in range(1):
             a = gtf.generate_pool_matrix(n, k, t)
 
             for tr in nw_trials:
@@ -112,7 +112,7 @@ def main():
                 # add execution time
                 time_MAXHS.append(tm)
                 # calculating hamming distance between model result and input x
-                hamming_distance = (n)*sd.hamming(x_s, r)
+                hamming_distance = sd.hamming(x_s, r)
                 tr.t_h.append(hamming_distance)
 
                 # there's an error?
@@ -152,7 +152,7 @@ def main():
                 r_lp = [int(i) for i in r_lp_i[:n]]
 
                 # calculating hamming distance between model result and input x
-                hamming_distance = (n)*sd.hamming(x_s, r_lp)
+                hamming_distance = sd.hamming(x_s, r_lp)
                 tr.lp_t_h.append(hamming_distance)
 
                 # there's an error?
@@ -166,7 +166,7 @@ def main():
                 r_lp = [round(i) for i in r_lp_i[:n]]
 
                 # calculating hamming distance between model result and input x
-                hamming_distance = (n) * sd.hamming(x_s, r_lp)
+                hamming_distance = sd.hamming(x_s, r_lp)
                 tr.lp_t_h_c.append(hamming_distance)
 
                 # there's an error?
@@ -198,28 +198,28 @@ def main():
         X.append(k * np.log2(n / k))
 
     for tr in nw_trials:
-        values = [[tr.P[i], tr.lp_P_C[i]] for i in range(len(tr.P))]
-        data = pd.DataFrame(values, T, columns=["MAX-SAT", "LP"])
+        values = [[tr.lp_P_C[i], tr.P[i]] for i in range(len(tr.P))]
+        data = pd.DataFrame(values, T, columns=["LP", "MAX-SAT"])
 
         sns.lineplot(data=data, palette="tab10", linewidth=2.5)
-        plt.plot(T, tr.P, "bo")
-        plt.plot(T, tr.lp_P_C, "yx")
-        plt.plot(X, tr.P, "r", label = "k * log2(n / k)", linewidth=2.5)
-        plt.title("Error trend of Max_Sat applied to Group Testing with  e = " + str(n) + " k = " + str(k))
+        plt.plot(T, tr.P, "yo")
+        plt.plot(T, tr.lp_P_C, "bx")
+        plt.plot(X, tr.P, "r", label = "Recovery Bound", linewidth=2.5)
+        plt.title("Probability of success with  e = " + str(n) + " k = " + str(k))
         plt.xlabel("Number of tests m")
         plt.ylabel("Probability of success")
         plt.legend(loc="lower right")
         plt.savefig("PS, e = " + str(n) + " k = " + str(k) + "noisy_weight = " + str(tr.var) + ".png")
         plt.show()
 
-        values = [[tr.E[i], tr.lp_E_C[i]] for i in range(len(tr.P))]
-        data = pd.DataFrame(values, T, columns=["MAX-SAT", "LP"])
+        values = [[tr.lp_E_C[i], tr.E[i]] for i in range(len(tr.P))]
+        data = pd.DataFrame(values, T, columns=["LP", "MAX-SAT"])
 
         sns.lineplot(data=data, palette="tab10", linewidth=2.5)
-        plt.plot(T, tr.E, "bo")
-        plt.plot(T, tr.lp_E_C, "yx")
-        plt.plot(X, tr.E, "r", label = "k * log2(n / k)", linewidth=2.5)
-        plt.title("Error trend of Max_Sat applied to Group Testing with  e = " + str(n) + " k = " + str(k))
+        plt.plot(T, tr.E, "yo")
+        plt.plot(T, tr.lp_E_C, "bx")
+        plt.plot(X, tr.E, "r", label = "Recovery Bound", linewidth=2.5)
+        plt.title("Hamming distance trend with  e = " + str(n) + " k = " + str(k))
         plt.xlabel("Number of tests m")
         plt.ylabel("Error (Hamming Distance)")
         plt.legend(loc = "upper right")
@@ -227,6 +227,4 @@ def main():
         plt.show()
 
 
-
-
-main()
+main(8000, 0.03, True)

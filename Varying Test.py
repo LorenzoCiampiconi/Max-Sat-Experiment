@@ -12,7 +12,7 @@ from mpl_toolkits.mplot3d import Axes3D
 n = 150
 
 # probability of an element to be faulty
-p = 0.03
+
 
 
 noiseless = False
@@ -26,12 +26,16 @@ class trial:
         self.var = var
 
 
-def main():
-    x, k = gtf.generate_input(n, p)
+def main(n, p):
+    k = round(n * p)
+
+    x, k_g = gtf.generate_input(n, p)
+
 
     # avoid k = 0, trivial example
-    while k < 4:
-        x, k = gtf.generate_input(n, 5 / n)
+    while (abs(k_g - k) / n) >= 0.01 or k_g == 0:
+        print("choosing")
+        x, k_g = gtf.generate_input(n, p)
 
     print ("k chosen")
     x_s = [1 if i in x else 0 for i in range(1, n + 1)]
@@ -74,7 +78,7 @@ def main():
     noise_weight = [0.0]
 
     if not noiseless:
-        noise_weight = [0.3, 0.35, 0.4, 0.5, 0.6, 0.7, 0.75, 0.8, 0.85, 0.9, 1, 1.05, 1.1]
+        noise_weight = [0.9]
 
     for i in noise_weight:
         nw_trials.append(trial(i))

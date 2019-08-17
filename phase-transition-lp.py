@@ -13,6 +13,7 @@ weighted = True
 number_of_trial = 100
 dir = "results-to-plot/"
 OUT_NAME = "output_file"
+p = 0.03
 
 
 class trial:
@@ -37,11 +38,14 @@ class trial:
 
 
 def main(noiseless, n):
-    x, k = gtf.generate_input(n, 5/n)
+    k = round(n * p)
+
+    x, k_g = gtf.generate_input(n, p)
 
     # avoid k = 0, trivial example
-    while k != 10:
-        x, k = gtf.generate_input(n, 5 / n)
+    while (abs(k_g - k) / n) >= 0.01 or k_g == 0:
+        print("choosing")
+        x, k_g = gtf.generate_input(n, p)
 
     x_s = [1 if i in x else 0 for i in range(1, n + 1)]
 
@@ -96,6 +100,7 @@ def main(noiseless, n):
         tr.t_e = []
 
         for i in range(number_of_trial):
+
             a = gtf.generate_pool_matrix(n, k, t)
 
             y = gtf.get_results(t, a, x, noiseless, noise_probability)
@@ -171,25 +176,25 @@ def main(noiseless, n):
     plt.plot(T, values, "bx")
     plt.plot(X, mean_time_lp, "r", label="Recovery Bound", linewidth=2.5)
     plt.title("Time trend of LP e = " + str(n) + " k = " + str(k))
-    plt.xlabel("Number of tests t")
+    plt.xlabel("Number of tests m")
     plt.ylabel("Time in seconds")
     plt.legend(loc="upper right")
-    plt.savefig("LP Time PS, n = " + str(n) + " k = " + str(k) + "noisy_weight = " + str(tr.var) + "noiseless= " + str(noiseless) + ".png")
+    plt.savefig("LP Time PS, e = " + str(n) + " k = " + str(k) + "noisy_weight = " + str(tr.var) + "noiseless= " + str(noiseless) + ".png")
     plt.show()
 
-    values = [[mean_time_maxhs[i], mean_time_lp[i]] for i in range(len(mean_time_maxhs))]
-    data = pd.DataFrame(values, T, columns=["MAXSAT", "LP"])
+    values = [[mean_time_lp[i], mean_time_maxhs[i]] for i in range(len(mean_time_maxhs))]
+    data = pd.DataFrame(values, T, columns=["LP", "MAXSAT"])
 
-
+    a = [0] + mean_time_maxhs[1:]
     sns.lineplot(data=data, palette="tab10", linewidth=2.5)
-    plt.plot(T, mean_time_lp, "yx")
-    plt.plot(T, mean_time_maxhs, "bo")
-    plt.plot(X, mean_time_maxhs, "r", label="Recovery Bound", linewidth=2.5)
-    plt.title("Time trend of MAXSAT e = " + str(n) + " k = " + str(k))
-    plt.xlabel("Number of tests t")
+    plt.plot(T, mean_time_lp, "bx")
+    plt.plot(T, mean_time_maxhs, "yo")
+    plt.plot(X, a, "r", label="Recovery Bound", linewidth=2.5)
+    plt.title("Time trend of MAXSAT and LP e = " + str(n) + " k = " + str(k))
+    plt.xlabel("Number of tests m")
     plt.ylabel("Time in seconds")
     plt.legend(loc="upper right")
-    plt.savefig(" MAXTime PS, n = " + str(n) + " k = " + str(k) + "noisy_weight = " + str(tr.var) + "noiseless= " + str(noiseless) + ".png")
+    plt.savefig(" MAXTime PS, e = " + str(n) + " k = " + str(k) + "noisy_weight = " + str(tr.var) + "noiseless= " + str(noiseless) + ".png")
     plt.show()
 
     '''
@@ -244,4 +249,7 @@ def main(noiseless, n):
         output_file.write(output_string)
 
 
-main(False, 250)
+main(True, 250)
+main(True, 500)
+main(True, 750)
+main(True, 1000)
