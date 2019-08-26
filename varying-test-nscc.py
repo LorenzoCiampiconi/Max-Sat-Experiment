@@ -6,10 +6,12 @@ import scipy.spatial.distance as sd
 import general_lp_interface as lp
 
 OUT_NAME = "output_file"
+EXTENSION = ".out"
+CMP = "_comparison"
 
 # pre-init parameter
 N = 100
-number_of_trials = 1
+number_of_trials = 100
 Sus = 4
 P = 0.01
 Lambda = 0.9
@@ -159,11 +161,11 @@ def main_comparison_maxhs_lp(n, p, noiseless, u):
     for i in range(len(T)):
         X.append(k * np.log2(n / k))
 
-    with open(OUT_NAME + "-" + str(u), "w") as output_file:
+    with open(OUT_NAME + CMP + "-" + str(u) + EXTENSION, "w") as output_file:
 
         output_string = ''
 
-        output_string += str(n) + "\n" + str(k) + "\n" + str(lambda_w) + "\n"
+        output_string += str(n) + "\n" + str(k) + "\n" + str(lambda_w) + "\n" + str(noiseless) + "\n"
 
         output_string += str(T) + "\n"
 
