@@ -13,7 +13,6 @@ weighted = True
 number_of_trial = 100
 dir = "results-to-plot/"
 OUT_NAME = "output_file"
-p = 0.03
 
 
 class trial:
@@ -37,7 +36,7 @@ class trial:
         self.var = var
 
 
-def main(noiseless, n):
+def main(noiseless, n, p):
     k = round(n * p)
 
     x, k_g = gtf.generate_input(n, p)
@@ -57,15 +56,15 @@ def main(noiseless, n):
     i = 1
     # until we reach the condition of success have more dense trials
     while T[i] < k * np.log2(n / k):
-        if T[i] - T[i - 1] > 1:
-            T.append(int(2 * T[i] - T[i - 1] - 1))
+        if T[i] - T[i - 1] > round(n/100):
+            T.append(int(2 * T[i] - T[i - 1] - round(n/100)))
         else:
-            T.append(int(T[i] + 1))
+            T.append(int(T[i] + round(n/100)))
         i += 1
 
     # dense trials around k* log2(n/k)
     while T[i] < n:
-        T.append(int(2 * T[i] - T[i - 1] + 1))
+        T.append(int(2 * T[i] - T[i - 1] + round(n/100)))
 
         i += 1
 
@@ -175,25 +174,33 @@ def main(noiseless, n):
     sns.lineplot(data=data, palette="tab10", linewidth=2.5)
     plt.plot(T, values, "bx")
     plt.plot(X, mean_time_lp, "r", label="Recovery Bound", linewidth=2.5)
-    plt.title("Time trend of LP e = " + str(n) + " k = " + str(k))
-    plt.xlabel("Number of tests m")
-    plt.ylabel("Time in seconds")
+    plt.title("n = " + str(n) + " k = " + str(k), fontsize=13)
+    plt.xlabel("Number of tests m", fontsize=13)
+    plt.ylabel("Time (s)", fontsize=13)
     plt.legend(loc="upper right")
-    plt.savefig("LP Time PS, e = " + str(n) + " k = " + str(k) + "noisy_weight = " + str(tr.var) + "noiseless= " + str(noiseless) + ".png")
+    fig = plt.figure(1)
+    ax = fig.add_subplot(111)
+    ax.tick_params(axis='both', which='major', labelsize=12)
+    ax.tick_params(axis='both', which='minor', labelsize=10)
+    plt.savefig("n = " + str(n) + " k = " + str(k) + "noisy_weight = " + str(tr.var) + "noiseless= " + str(noiseless) + ".png")
     plt.show()
 
     values = [[mean_time_lp[i], mean_time_maxhs[i]] for i in range(len(mean_time_maxhs))]
-    data = pd.DataFrame(values, T, columns=["LP", "MAXSAT"])
+    data = pd.DataFrame(values, T, columns=["LP", "MaxSAT"])
 
     a = [0] + mean_time_maxhs[1:]
     sns.lineplot(data=data, palette="tab10", linewidth=2.5)
     plt.plot(T, mean_time_lp, "bx")
     plt.plot(T, mean_time_maxhs, "yo")
     plt.plot(X, a, "r", label="Recovery Bound", linewidth=2.5)
-    plt.title("Time trend of MAXSAT and LP e = " + str(n) + " k = " + str(k))
-    plt.xlabel("Number of tests m")
-    plt.ylabel("Time in seconds")
+    plt.title("n = " + str(n) + " k = " + str(k), fontsize=13)
+    plt.xlabel("Number of tests m", fontsize=13)
+    plt.ylabel("Time (s)", fontsize=13)
     plt.legend(loc="upper right")
+    fig = plt.figure(1)
+    ax = fig.add_subplot(111)
+    ax.tick_params(axis='both', which='major', labelsize=12)
+    ax.tick_params(axis='both', which='minor', labelsize=10)
     plt.savefig(" MAXTime PS, e = " + str(n) + " k = " + str(k) + "noisy_weight = " + str(tr.var) + "noiseless= " + str(noiseless) + ".png")
     plt.show()
 
@@ -249,7 +256,17 @@ def main(noiseless, n):
         output_file.write(output_string)
 
 
-main(True, 250)
-main(True, 500)
-main(True, 750)
-main(True, 1000)
+main(True, 250, 10/250)
+main(True, 500, 10/500)
+main(True, 750, 10/750)
+main(True, 1000, 10/1000)
+
+main(True, 250, 0.01)
+main(True, 500, 0.01)
+main(True, 750, 0.01)
+main(True, 1000, 0.01)
+
+main(True, 250, 0.03)
+main(True, 500, 0.03)
+main(True, 750, 0.03)
+main(True, 1000, 0.03)

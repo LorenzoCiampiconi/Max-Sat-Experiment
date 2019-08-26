@@ -10,7 +10,7 @@ import pandas as pd
 import seaborn as sns
 
 DIR = "../pull-nscc/Print-750/"
-N = 215
+N = 10
 FILE_GENERAL = "output_file-"
 EXTENSION = ".out"
 
@@ -37,7 +37,7 @@ def parser_2():
             x = [[item]*len(t) for item in n]
             y = [t]*len(n)
 
-            Print.print(x,y,T_CPU)
+            Print.print(x, y, T_CPU)
 
 
 def parser():
@@ -58,38 +58,48 @@ def parser():
             E = data[4]
             P = data[5]
 
+            E = [e/(n) for e in E]
+
             X = []
 
             for i in range(len(T)):
                 X.append(k * np.log2(n / k))
 
             values = P
-            data = pd.DataFrame(values, T, columns=["MAX-sat"])
+            data = pd.DataFrame(values, T, columns=["MaxSAT"])
 
 
             sns.lineplot(data=data, palette="tab10", linewidth=2.5)
             plt.plot(T, P, "bo")
             plt.plot(X, P, "r", label="Recovery Bound")
             plt.plot(T, P, "g")
-            plt.title("Probability of Success with e = " + str(n) + " k = " + str(k))
-            plt.xlabel("Number of tests m")
-            plt.ylabel("Probability of success")
+            plt.title("n = " + str(n) + ", k = " + str(k), fontsize=13)
+            plt.xlabel("Number of tests m", fontsize=13)
+            plt.ylabel("Probability of success", fontsize=13)
             plt.legend(loc="lower right")
+            fig = plt.figure(1)
+            ax = fig.add_subplot(111)
+            ax.tick_params(axis='both', which='major', labelsize=12)
+            ax.tick_params(axis='both', which='minor', labelsize=10)
             plt.savefig("PS, e = " + str(n) + " k = " + str(k) + "l = " + str(lambdam) +  ".png")
             plt.show()
             plt.close()
 
             values = E
-            data = pd.DataFrame(values, T, columns=["MAX-sat"])
+            data = pd.DataFrame(values, T, columns=["MaxSAT"])
 
             sns.lineplot(data=data, palette="tab10", linewidth=2.5)
             plt.plot(T, E, "bo")
             plt.plot(X, E, "r", label="Recovery Bound")
             plt.plot(T, E, "g")
-            plt.title("Hamming Distance trend with  e = " + str(n) + " k = " + str(k))
-            plt.xlabel("Number of tests m")
-            plt.ylabel("Error (Hamming Distance)")
+            plt.title("n = " + str(n) + ", k = " + str(k), fontsize=13)
+            plt.xlabel("Number of tests m", fontsize=13)
+            plt.ylabel("Hamming Distance", fontsize=13)
             plt.legend(loc="upper right")
+            fig = plt.figure(1)
+            ax = fig.add_subplot(111)
+            ax.tick_params(axis='both', which='major', labelsize=12)
+            ax.tick_params(axis='both', which='minor', labelsize=10)
             plt.savefig("HD, n = " + str(n) + " k = " + str(k) + "l = " + str(lambdam) + ".png")
             plt.show()
             plt.close()

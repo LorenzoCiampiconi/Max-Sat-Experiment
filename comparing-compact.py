@@ -81,13 +81,15 @@ def main(n, p, noiseless):
     for i in noise_weight:
         nw_trials.append(trial(i))
 
-    time_LP = []
-    time_MAXHS = []
-    time_MAXHS_W = []
+    mean_time_lp = []
+    mean_time_maxhs = []
 
     # for every t number of tests
     for t in T:
         print(t)
+
+        time_lp = []
+        time_maxhs = []
 
         for tr in nw_trials:
             # Max_HS
@@ -114,7 +116,7 @@ def main(n, p, noiseless):
                 r, noise, tm = mxs.call_Max_Sat(n)
 
                 # add execution time
-                time_MAXHS.append(tm)
+                time_maxhs.append(tm)
                 # calculating hamming distance between model result and input x
                 hamming_distance = sd.hamming(x_s, r)
                 tr.t_h.append(hamming_distance)
@@ -125,18 +127,16 @@ def main(n, p, noiseless):
                 else:
                     tr.t_e.append(0)
 
-                # *************LP_RELAX*************
-                r_lp_i, tm = lp.solve(y, a, n, noiseless)
+                # *************NON-COMPACT*************
+                mxs.non_compact_output(n, t, x, y, a, noiseless, tr.var)
+
+                r, noise, tm = mxs.call_Max_Sat(n)
+
 
                 # add execution time
-                time_LP.append(tm)
-
-                # ****CAST****
-
-                r_lp = [int(i) for i in r_lp_i[:n]]
-
+                time_lp.append(tm)
                 # calculating hamming distance between model result and input x
-                hamming_distance = sd.hamming(x_s, r_lp)
+                hamming_distance = sd.hamming(x_s, r)
                 tr.lp_t_h.append(hamming_distance)
 
                 # there's an error?
@@ -144,20 +144,6 @@ def main(n, p, noiseless):
                     tr.lp_t_e.append(1)
                 else:
                     tr.lp_t_e.append(0)
-
-                # ****CEIL****
-
-                r_lp = [round(i) for i in r_lp_i[:n]]
-
-                # calculating hamming distance between model result and input x
-                hamming_distance = sd.hamming(x_s, r_lp)
-                tr.lp_t_h_c.append(hamming_distance)
-
-                # there's an error?
-                if hamming_distance > 0:
-                    tr.lp_t_e_c.append(1)
-                else:
-                    tr.lp_t_e_c.append(0)
 
         for tr in nw_trials:
             # MAX_HS
@@ -168,21 +154,18 @@ def main(n, p, noiseless):
             tr.lp_E.append(np.mean(tr.lp_t_h))
             tr.lp_P.append(1 - np.mean(tr.lp_t_e))
             print(1 - np.mean(tr.lp_t_e))
-            # LP_RELAX
-            tr.lp_E_C.append(np.mean(tr.lp_t_h_c))
-            tr.lp_P_C.append(1 - np.mean(tr.lp_t_e_c))
+
+        mean_time_lp.append(np.mean(time_lp))
+        mean_time_maxhs.append(np.mean(time_maxhs))
 
     X = []
-
-    t_lp = np.mean(time_LP)
-    t_maxhs = np.mean(time_MAXHS)
 
     for i in range(len(T)):
         X.append(k * np.log2(n / k))
 
     for tr in nw_trials:
         values = [[tr.lp_P[i], tr.P[i]] for i in range(len(tr.P))]
-        data = pd.DataFrame(values, T, columns=["LP", "MAX-SAT"])
+        data = pd.DataFrame(values, T, columns=["non-compact", "compact"])
 
         sns.lineplot(data=data, palette="tab10", linewidth=2.5)
         plt.plot(T, tr.P, "yo")
@@ -200,7 +183,7 @@ def main(n, p, noiseless):
         plt.show()
 
         values = [[tr.lp_E[i], tr.E[i]] for i in range(len(tr.P))]
-        data = pd.DataFrame(values, T, columns=["LP", "MAX-SAT"])
+        data = pd.DataFrame(values, T, columns=["non-compact", "compact"])
 
         sns.lineplot(data=data, palette="tab10", linewidth=2.5)
         plt.plot(T, tr.E, "yo")
@@ -217,8 +200,25 @@ def main(n, p, noiseless):
         plt.savefig("HD, e = " + str(n) + " k = " + str(k) + "noisy_weight = " + str(tr.var) + ".png")
         plt.show()
 
+    values = [[mean_time_lp[i], mean_time_maxhs[i]] for i in range(len(mean_time_maxhs))]
+    data = pd.DataFrame(values, T, columns=["XOR-MaxSAT", "MaxSAT"])
 
-#main(250, 0.03, False)
-#main(500, 0.03, False)
-#main(750, 0.03, False)
-main(250, 0.05, True)
+    a = [0] + mean_time_maxhs[1:]
+    sns.lineplot(data=data, palette="tab10", linewidth=2.5)
+    plt.plot(T, mean_time_lp, "bx")
+    plt.plot(T, mean_time_maxhs, "yo")
+    plt.plot(X, a, "r", label="Recovery Bound", linewidth=2.5)
+    plt.title("n = " + str(n) + " k = " + str(k), fontsize=13)
+    plt.xlabel("Number of tests m", fontsize=13)
+    plt.ylabel("Time (s)", fontsize=13)
+    plt.legend(loc="upper right")
+    fig = plt.figure(1)
+    ax = fig.add_subplot(111)
+    ax.tick_params(axis='both', which='major', labelsize=12)
+    ax.tick_params(axis='both', which='minor', labelsize=10)
+    plt.savefig(" MAXTime PS, e = " + str(n) + " k = " + str(k) + "noisy_weight = " + str(tr.var) + "noiseless= " + str(
+        noiseless) + ".png")
+    plt.show()
+
+
+main(50, 0.02, False)

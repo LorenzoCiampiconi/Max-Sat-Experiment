@@ -1,31 +1,40 @@
 import subprocess as sbp
-import time as t
 
 # need to modify MAX_HS_DIR with your maxhs dir to use this
 MAX_HS_DIR = r"../MaxHS-3.0"
 COMMAND = "maxhs"
+BSTSOL = "-printBstSoln"
+CPULIM = "-cpu-lim=20"
 fixed_header = "c\nc comments Weighted Max-SAT\nc\np wcnf "
-hard_weight = 100000000
+hard_weight = 1000000000
 soft_weight = 1
 input_for_max_HS = "/max_sat_input"
 output_data_set = "data set"
 SEP1 = "nv"
+SEP12 = "Best Model Found:"
 SEP2 = "nc"
 CPUTIME = "CPU: "
+TEMP = r"../max-sat-tester/temp"
 
 
 # function that calls max_HS by an output file and parse the output
 def call_Max_Sat(n):
 
     # get the output
-    output_string = str(sbp.run([COMMAND, MAX_HS_DIR + input_for_max_HS], stdout=sbp.PIPE).stdout)
+    output_string = str(sbp.run([COMMAND, BSTSOL, CPULIM, MAX_HS_DIR + input_for_max_HS], stdout=sbp.PIPE).stdout)
 
     time_string = output_string.split(CPUTIME)[1]
     time = float(time_string.split("\\")[0])
 
-    # get the interesting output,
-    output_string = (output_string.split(SEP1)[1]).split(SEP2)[0]
-    model_string = (output_string[0:len(output_string) - 1]).split(" ")[1:]
+    # get the interesting output
+    if(output_string.__contains__("Best Model Found:")):
+        output_string = (output_string.split(SEP12))[1]
+        output_string = (output_string.split(SEP2)[1]).split(SEP2)[0]
+        output_string = (output_string.split(" \\")[0])
+        model_string = (output_string[0:len(output_string) - 1]).split(" ")[1:]
+    else:
+        output_string = (output_string.split(SEP1)[1]).split(SEP2)[0]
+        model_string = (output_string[0:len(output_string) - 1]).split(" ")[1:]
 
     # parse the model into integer
     model = list(map(int, model_string))
@@ -99,6 +108,82 @@ def output(n, t, x, y, a, noiseless, noise_weight):
     max_HS_input += hard_clauses_string + soft_clauses_string
 
     with open(MAX_HS_DIR + input_for_max_HS, "w") as output_file:
+        output_file.write(max_HS_input)
+
+    return
+
+
+def non_compact_output(n, t, x, y, a, noiseless, noise_weight):
+
+    m = n + t
+
+    max_HS_input = fixed_header + " " + str(m)
+    hard_clauses_string = ''
+    soft_clauses_string = ''
+    neg = []
+    nc = 0
+
+    # noisy settings
+    for i in range(t):
+        if y[i] == 1:
+            if a[i]:
+
+                # first part of XOR constraint
+                for element in a[i]:
+                    local_hard = str(hard_weight) + " "
+                    nc = nc + 1
+                    local_hard += " -" + str(element) + " "
+                    local_hard += "-" + (str(n + i + 1))
+                    local_hard += " 0\n"
+                    hard_clauses_string += local_hard
+
+                # second part of XOR constraint
+                local_hard = str(hard_weight) + " "
+                nc = nc + 1
+                for element in a[i]:
+                    local_hard += str(element) + " "
+                local_hard += (str(n + i + 1))
+                local_hard += " 0\n"
+                hard_clauses_string += local_hard
+
+                soft_clauses_string += str(noise_weight) + " -" + str(n + i + 1) + " 0\n"
+        else:
+            if a[i]:
+                # first part of XOR constraint
+                for element in a[i]:
+                    nc = nc + 1
+                    local_hard = str(hard_weight) + " -" + str(element) + " " + str(n + i + 1) + " 0\n"
+                    hard_clauses_string += local_hard
+                    nc = nc + 1
+
+                    if len(a) > 1:
+                        local_hard = str(hard_weight)
+                        for element_c in a[i]:
+                            if element_c != element:
+                                local_hard += " " + str(element_c)
+                        local_hard += " 0\n"
+                        hard_clauses_string += local_hard
+
+                # second part of XOR constraint
+                nc = nc + 1
+                local_hard = str(hard_weight) + " "
+                for element in a[i]:
+                    local_hard += str(element) + " "
+                local_hard += "-" + (str(n + i + 1))
+                local_hard += " 0\n"
+                hard_clauses_string += local_hard
+
+    # add soft constraint to ensure minimum number of item faulty to max_HS input
+    for j in range(1, n + 1):
+        if j not in neg:
+            nc += 1
+            soft_clauses_string += str(soft_weight) + " -" + str(j) + " 0\n"
+
+    max_HS_input += " " + str(nc) + " " + str(hard_weight) + "\n"
+
+    max_HS_input += hard_clauses_string + soft_clauses_string
+
+    with open(MAX_HS_DIR + input_for_max_HS, "w+") as output_file:
         output_file.write(max_HS_input)
 
     return

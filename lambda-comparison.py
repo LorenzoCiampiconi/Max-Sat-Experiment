@@ -4,7 +4,6 @@ import group_testing_function as gtf
 import numpy as np
 import scipy.spatial.distance as sd
 import matplotlib.pyplot as plt
-import math
 import seaborn as sns
 import pandas as pd
 
@@ -69,14 +68,13 @@ def main(n, p, noiseless):
 
     nw_trials = []
 
+    weight_1 = noise_probability + (k/n)*(1-(1-(k/n))**(n*(np.log(2)/k)))
+    weight_2 = (np.log((1-noise_probability)/noise_probability)) / (np.log((1-(k/n))/(k/n)))
+
     noise_weight = [0.0]
 
     if not noiseless:
-        noise_weight = [round((np.log((1-noise_probability)/noise_probability)) / (np.log((1-(k/n))/(k/n))), 2)]
-        #noise_weight = [0.9]
-        print(k)
-        print(n)
-        print(noise_weight)
+        noise_weight = [0.9]
 
     for i in noise_weight:
         nw_trials.append(trial(i))
@@ -109,7 +107,9 @@ def main(n, p, noiseless):
 
                 # *************MAX_HS*************
 
-                mxs.output(n, t, x, y, a, noiseless, tr.var)
+                print("l-w")
+
+                mxs.output(n, t, x, y, a, noiseless, 1 / weight_1)
 
                 r, noise, tm = mxs.call_Max_Sat(n)
 
@@ -125,15 +125,18 @@ def main(n, p, noiseless):
                 else:
                     tr.t_e.append(0)
 
-                # *************LP_RELAX*************
-                r_lp_i, tm = lp.solve(y, a, n, noiseless)
+                # *************MAX_SAT_W2*************
+
+                print("s-w")
+                mxs.output(n, t, x, y, a, noiseless, weight_2)
+                r_lp, noise, tm = mxs.call_Max_Sat(n)
 
                 # add execution time
                 time_LP.append(tm)
 
                 # ****CAST****
 
-                r_lp = [int(i) for i in r_lp_i[:n]]
+                #r_lp = [int(i) for i in r_lp_i[:n]]
 
                 # calculating hamming distance between model result and input x
                 hamming_distance = sd.hamming(x_s, r_lp)
@@ -147,7 +150,7 @@ def main(n, p, noiseless):
 
                 # ****CEIL****
 
-                r_lp = [round(i) for i in r_lp_i[:n]]
+                # r_lp = [round(i) for i in r_lp_i[:n]]
 
                 # calculating hamming distance between model result and input x
                 hamming_distance = sd.hamming(x_s, r_lp)
@@ -163,11 +166,12 @@ def main(n, p, noiseless):
             # MAX_HS
             tr.E.append(np.mean(tr.t_h))
             tr.P.append(1 - np.mean(tr.t_e))
-            print(1 - np.mean(tr.t_e))
+            if(weighted):
+                tr.E_W.append(np.mean(tr.t_h_w))
+                tr.P_W.append(1 - np.mean(tr.t_e_w))
             # LP_RELAX
             tr.lp_E.append(np.mean(tr.lp_t_h))
             tr.lp_P.append(1 - np.mean(tr.lp_t_e))
-            print(1 - np.mean(tr.lp_t_e))
             # LP_RELAX
             tr.lp_E_C.append(np.mean(tr.lp_t_h_c))
             tr.lp_P_C.append(1 - np.mean(tr.lp_t_e_c))
@@ -181,44 +185,34 @@ def main(n, p, noiseless):
         X.append(k * np.log2(n / k))
 
     for tr in nw_trials:
-        values = [[tr.lp_P[i], tr.P[i]] for i in range(len(tr.P))]
+        values = [[tr.lp_P_C[i], tr.P[i]] for i in range(len(tr.P))]
         data = pd.DataFrame(values, T, columns=["LP", "MAX-SAT"])
 
         sns.lineplot(data=data, palette="tab10", linewidth=2.5)
         plt.plot(T, tr.P, "yo")
-        plt.plot(T, tr.lp_P, "bx")
+        plt.plot(T, tr.lp_P_C, "bx")
         plt.plot(X, tr.P, "r", label = "Recovery Bound", linewidth=2.5)
-        plt.title("Probability of success with  n = " + str(n) + " k = " + str(k), fontsize=13)
-        plt.xlabel("Number of tests m", fontsize=13)
-        plt.ylabel("Probability of success", fontsize=13)
+        plt.title("Probability of success with  e = " + str(n) + " k = " + str(k))
+        plt.xlabel("Number of tests m")
+        plt.ylabel("Probability of success")
         plt.legend(loc="lower right")
-        fig = plt.figure(1)
-        ax = fig.add_subplot(111)
-        ax.tick_params(axis='both', which='major', labelsize=12)
-        ax.tick_params(axis='both', which='minor', labelsize=10)
         plt.savefig("PS, e = " + str(n) + " k = " + str(k) + "noisy_weight = " + str(tr.var) + ".png")
         plt.show()
 
-        values = [[tr.lp_E[i], tr.E[i]] for i in range(len(tr.P))]
+        values = [[tr.lp_E_C[i], tr.E[i]] for i in range(len(tr.P))]
         data = pd.DataFrame(values, T, columns=["LP", "MAX-SAT"])
 
         sns.lineplot(data=data, palette="tab10", linewidth=2.5)
         plt.plot(T, tr.E, "yo")
-        plt.plot(T, tr.lp_E, "bx")
+        plt.plot(T, tr.lp_E_C, "bx")
         plt.plot(X, tr.E, "r", label = "Recovery Bound", linewidth=2.5)
-        plt.title("Hamming distance trend with  n = " + str(n) + " k = " + str(k), fontsize=13)
-        plt.xlabel("Number of tests m", fontsize=13)
-        plt.ylabel("Error (Hamming Distance)", fontsize=13)
+        plt.title("Hamming distance trend with  e = " + str(n) + " k = " + str(k))
+        plt.xlabel("Number of tests m")
+        plt.ylabel("Error (Hamming Distance)")
         plt.legend(loc = "upper right")
-        fig = plt.figure(1)
-        ax = fig.add_subplot(111)
-        ax.tick_params(axis='both', which='major', labelsize=12)
-        ax.tick_params(axis='both', which='minor', labelsize=10)
         plt.savefig("HD, e = " + str(n) + " k = " + str(k) + "noisy_weight = " + str(tr.var) + ".png")
         plt.show()
 
 
-#main(250, 0.03, False)
-#main(500, 0.03, False)
-#main(750, 0.03, False)
-main(250, 0.05, True)
+main(100, 0.03, False)
+
