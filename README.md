@@ -54,6 +54,7 @@ Run   ``python test.py``, that combines all above commands.
 
 # Contact
 [Bishwamittra Ghosh](https://bishwamittra.github.io/) (bghosh@u.nus.edu)
+
 [Lorenzo Ciampiconi](https://github.com/LorenzoCiampiconi/) (lorenzo.ciampiconi@lastminute.com)
 
 
